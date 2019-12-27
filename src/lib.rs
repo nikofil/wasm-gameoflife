@@ -16,7 +16,7 @@ pub enum Cell {
 pub struct Universe {
     width: u32,
     height: u32,
-    cells: Vec<Cell>,
+    cells: Vec<u8>,
 }
 
 #[wasm_bindgen]
@@ -25,7 +25,7 @@ impl Universe {
         Universe {
             width,
             height,
-            cells: vec![Cell::Dead; (width * height) as usize],
+            cells: vec![0; (width * height / 8 + 1) as usize],
         }
     }
 
@@ -43,17 +43,20 @@ impl Universe {
 
     pub fn get(&self, x: u32, y: u32) -> Option<Cell> {
         if x < self.width && y < self.height {
-            Some(self.cells[(y * self.width + x) as usize])
+            let idx = (y * self.width + x) as usize;
+            match self.cells[idx / 8] & (1 << (idx % 8)) {
+                0 => Some(Cell::Dead),
+                _ => Some(Cell::Alive),
+            }
         } else {
             None
         }
     }
 
     pub fn toggle(&mut self, x: u32, y: u32) {
-        self.cells[(y * self.width + x) as usize] = match self.get(x, y) {
-            None => return,
-            Some(Cell::Dead) => Cell::Alive,
-            Some(Cell::Alive) => Cell::Dead,
+        let idx = (y * self.width + x) as usize;
+        if self.get(x, y).is_some() {
+            self.cells[idx / 8] ^= 1 << (idx % 8);
         }
     }
 
@@ -70,17 +73,17 @@ impl Universe {
     }
 
     pub fn tick(&mut self) {
-        let mut next = vec![Cell::Dead; self.cells.len()];
+        let mut next = Self::new(self.width, self.height);
         for x in 0..self.width {
             for y in 0..self.height {
-                next[(y * self.width + x) as usize] = match (self.get(x, y).unwrap(), self.alive_around(x, y)) {
-                    (Cell::Alive, 2) | (Cell::Alive, 3) => Cell::Alive,
-                    (Cell::Dead, 3) => Cell::Alive,
-                    _ => Cell::Dead,
+                match (self.get(x, y).unwrap(), self.alive_around(x, y)) {
+                    (Cell::Alive, 2) | (Cell::Alive, 3) => next.toggle(x, y),
+                    (Cell::Dead, 3) => next.toggle(x, y),
+                    _ => {},
                 }
             }
         }
-        self.cells = next;
+        self.cells = next.cells;
     }
 
     pub fn width(&self) -> u32 {
@@ -91,7 +94,7 @@ impl Universe {
         self.height
     }
 
-    pub fn cells(&self) -> *const Cell {
+    pub fn cells(&self) -> *const u8 {
         self.cells.as_ptr()
     }
 

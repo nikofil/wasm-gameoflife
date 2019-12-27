@@ -7,9 +7,14 @@ const DEAD_COLOR = "#FFFFFF";
 const ALIVE_COLOR = "#000000";
 
 const canvas = document.getElementById('gol-canvas');
-const uni = Universe.default();
+// const uni = Universe.default();
+const uni = Universe.new(64, 64);
 const width = uni.width();
 const height = uni.height();
+for (var x = 0; x < width; x++)
+    for (var y = 0; y < width; y++)
+        if (Math.random() < 0.5)
+            uni.toggle(x, y);
 const cells = uni.cells();
 
 canvas.width = (CELL_SIZE + 1) * width + 1;
@@ -37,14 +42,14 @@ const drawGrid = () => {
 
 const drawCells = () => {
     const cellsPtr = uni.cells();
-    const cells = new Uint8Array(memory.buffer, cellsPtr, width * height);
+    const cells = new Uint8Array(memory.buffer, cellsPtr, width * height / 8 + 1);
 
     ctx.beginPath();
 
     for (let x = 0; x < width; x++) {
         for (let y = 0; y < height; y++) {
             const idx = getIndex(x, y);
-            ctx.fillStyle = cells[idx] === Cell.Dead ? DEAD_COLOR : ALIVE_COLOR;
+            ctx.fillStyle = ((cells[Math.floor(idx / 8)] & (1 << (idx % 8))) != 0) ? ALIVE_COLOR : DEAD_COLOR;
             ctx.fillRect(
                 x * (CELL_SIZE + 1) + 1,
                 y * (CELL_SIZE + 1) + 1,

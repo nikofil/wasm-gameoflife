@@ -1,13 +1,68 @@
-import { Universe } from "wasm-gameoflife";
+import { Universe, Cell } from "wasm-gameoflife";
+import { memory } from "wasm-gameoflife/wasm_gameoflife_bg";
 
-const pre = document.getElementById('gol-canvas');
+const CELL_SIZE = 10; // px
+const GRID_COLOR = "#CCCCCC";
+const DEAD_COLOR = "#FFFFFF";
+const ALIVE_COLOR = "#000000";
+
+const canvas = document.getElementById('gol-canvas');
 const uni = Universe.default();
+const width = uni.width();
+const height = uni.height();
+const cells = uni.cells();
+
+canvas.width = (CELL_SIZE + 1) * width + 1;
+canvas.height = (CELL_SIZE + 1) * height + 1;
+
+const ctx = canvas.getContext('2d');
+
+const getIndex = (x, y) => y * width + x;
+
+const drawGrid = () => {
+    ctx.beginPath();
+    ctx.strokeStyle = GRID_COLOR;
+
+    for (let i = 0; i <= width; i++) {
+        ctx.moveTo(i * (CELL_SIZE + 1) + 1, 0);
+        ctx.lineTo(i * (CELL_SIZE + 1) + 1, (CELL_SIZE + 1) * height + 1);
+    }
+    for (let j = 0; j <= height; j++) {
+        ctx.moveTo(0,                           j * (CELL_SIZE + 1) + 1);
+        ctx.lineTo((CELL_SIZE + 1) * width + 1, j * (CELL_SIZE + 1) + 1);
+    }
+
+    ctx.stroke();
+}
+
+const drawCells = () => {
+    const cellsPtr = uni.cells();
+    const cells = new Uint8Array(memory.buffer, cellsPtr, width * height);
+
+    ctx.beginPath();
+
+    for (let x = 0; x < width; x++) {
+        for (let y = 0; y < height; y++) {
+            const idx = getIndex(x, y);
+            ctx.fillStyle = cells[idx] === Cell.Dead ? DEAD_COLOR : ALIVE_COLOR;
+            ctx.fillRect(
+                x * (CELL_SIZE + 1) + 1,
+                y * (CELL_SIZE + 1) + 1,
+                CELL_SIZE,
+                CELL_SIZE
+            );
+        }
+    }
+
+    ctx.stroke();
+}
 
 let prev = 0;
 const renderLoop = (ts) => {
     if (ts - prev > 100) {
         prev = ts;
-        pre.textContent = uni.render();
+        drawGrid();
+        drawCells();
         uni.tick();
     }
     requestAnimationFrame(renderLoop);

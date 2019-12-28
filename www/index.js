@@ -6,19 +6,23 @@ const GRID_COLOR = "#CCCCCC";
 const DEAD_COLOR = "#FFFFFF";
 const ALIVE_COLOR = "#000000";
 
-const canvas = document.getElementById('gol-canvas');
-// const uni = Universe.default();
-const uni = Universe.new(64, 64);
-const width = uni.width();
-const height = uni.height();
-for (var x = 0; x < width; x++)
-    for (var y = 0; y < width; y++)
-        if (Math.random() < 0.5)
-            uni.toggle(x, y);
-const cells = uni.cells();
+let canvas = document.getElementById('gol-canvas');
+let uni;
+let width;
+let height;
+let cells;
 
-canvas.width = (CELL_SIZE + 1) * width + 1;
-canvas.height = (CELL_SIZE + 1) * height + 1;
+const initUni = (newuni) => {
+    uni = newuni;
+    width = uni.width();
+    height = uni.height();
+    cells = uni.cells();
+
+    canvas.width = (CELL_SIZE + 1) * width + 1;
+    canvas.height = (CELL_SIZE + 1) * height + 1;
+}
+
+initUni(Universe.default());
 
 const ctx = canvas.getContext('2d');
 
@@ -62,7 +66,43 @@ const drawCells = () => {
     ctx.stroke();
 }
 
+let dragging = false;
+let lastX = -1;
+let lastY = -1;
+
+const toggleCell = ({offsetX, offsetY}) => {
+    const x = Math.floor(offsetX / (CELL_SIZE + 1));
+    const y = Math.floor(offsetY / (CELL_SIZE + 1));
+    uni.toggle(x, y);
+    drawGrid();
+    drawCells();
+}
+
+const setLast = ({offsetX, offsetY}) => {
+    const x = Math.floor(offsetX / (CELL_SIZE + 1));
+    const y = Math.floor(offsetY / (CELL_SIZE + 1));
+    if (x != lastX || y != lastY) {
+        lastX = x;
+        lastY = y;
+        return true;
+    }
+    return false;
+}
+
+canvas.onclick = toggleCell;
+
+canvas.onmousedown = () => {dragging = true;}
+canvas.onmouseup = () => {setLast(-1, -1); dragging = false;}
+canvas.onmouseleave = () => {setLast(-1, -1); dragging = false;}
+canvas.onmousemove = (e) => {
+    if (dragging && setLast(e)) {
+        toggleCell(e);
+    }
+}
+
 let prev = 0;
+let animId = null;
+
 const renderLoop = (ts) => {
     if (ts - prev > 100) {
         prev = ts;
@@ -70,7 +110,53 @@ const renderLoop = (ts) => {
         drawCells();
         uni.tick();
     }
-    requestAnimationFrame(renderLoop);
+    animId = requestAnimationFrame(renderLoop);
 }
 
-requestAnimationFrame(renderLoop);
+const pause = () => {
+    if (animId === null) {
+        requestAnimationFrame(renderLoop);
+    } else {
+        cancelAnimationFrame(animId);
+        animId = null;
+    }
+}
+
+const step = () => {
+    uni.tick();
+    drawGrid();
+    drawCells();
+}
+
+const cleargol = () => {
+    initUni(Universe.new(64, 64));
+    drawGrid();
+    drawCells();
+}
+
+const randomgol = () => {
+    initUni(Universe.new(64, 64));
+    for (var x = 0; x < width; x++)
+        for (var y = 0; y < width; y++)
+            if (Math.random() < 0.5)
+                uni.toggle(x, y);
+    drawGrid();
+    drawCells();
+}
+
+const defaultgol = () => {
+    initUni(Universe.default());
+    drawGrid();
+    drawCells();
+}
+
+document.getElementById('pause').onclick = pause;
+document.getElementById('step').onclick = step;
+document.getElementById('clear').onclick = cleargol;
+document.getElementById('random').onclick = randomgol;
+document.getElementById('default').onclick = defaultgol;
+
+drawGrid();
+drawCells();
+
+// requestAnimationFrame(renderLoop);

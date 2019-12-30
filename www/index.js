@@ -11,6 +11,7 @@ let uni;
 let width;
 let height;
 let cells;
+let targFps = 10;
 
 const initUni = (newuni) => {
     uni = newuni;
@@ -102,9 +103,15 @@ canvas.onmousemove = (e) => {
 
 let prev = 0;
 let animId = null;
+let perfPrev = 0;
 
 const renderLoop = (ts) => {
-    if (ts - prev > 100) {
+    if (ts - prev > 1000 / targFps) {
+        const perf = performance.now();
+        const fps = 1000 / (perf - perfPrev);
+        perfPrev = perf;
+        document.getElementById('fps').innerText = fps.toString().slice(0, 4);
+        console.log(fps);
         prev = ts;
         drawGrid();
         drawCells();
@@ -155,6 +162,10 @@ document.getElementById('step').onclick = step;
 document.getElementById('clear').onclick = cleargol;
 document.getElementById('random').onclick = randomgol;
 document.getElementById('default').onclick = defaultgol;
+
+document.getElementById('range').onchange = (e) => {
+    targFps = e.target.value;
+}
 
 drawGrid();
 drawCells();

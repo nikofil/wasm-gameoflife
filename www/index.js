@@ -51,16 +51,20 @@ const drawCells = () => {
 
     ctx.beginPath();
 
+    ctx.fillStyle = DEAD_COLOR;
+    ctx.fillRect(0, 0, width * (CELL_SIZE + 1) + 1, height * (CELL_SIZE + 1) + 1);
+    ctx.fillStyle = ALIVE_COLOR;
     for (let x = 0; x < width; x++) {
         for (let y = 0; y < height; y++) {
             const idx = getIndex(x, y);
-            ctx.fillStyle = ((cells[Math.floor(idx / 8)] & (1 << (idx % 8))) != 0) ? ALIVE_COLOR : DEAD_COLOR;
-            ctx.fillRect(
-                x * (CELL_SIZE + 1) + 1,
-                y * (CELL_SIZE + 1) + 1,
-                CELL_SIZE,
-                CELL_SIZE
-            );
+            if ((cells[Math.floor(idx / 8)] & (1 << (idx % 8))) != 0) {
+                ctx.fillRect(
+                    x * (CELL_SIZE + 1) + 1,
+                    y * (CELL_SIZE + 1) + 1,
+                    CELL_SIZE,
+                    CELL_SIZE
+                );
+            }
         }
     }
 
@@ -75,8 +79,8 @@ const toggleCell = ({offsetX, offsetY}) => {
     const x = Math.floor(offsetX / (CELL_SIZE + 1));
     const y = Math.floor(offsetY / (CELL_SIZE + 1));
     uni.toggle(x, y);
-    drawGrid();
     drawCells();
+    drawGrid();
 }
 
 const setLast = ({offsetX, offsetY}) => {
@@ -111,10 +115,9 @@ const renderLoop = (ts) => {
         const fps = 1000 / (perf - perfPrev);
         perfPrev = perf;
         document.getElementById('fps').innerText = fps.toString().slice(0, 4);
-        console.log(fps);
         prev = ts;
-        drawGrid();
         drawCells();
+        drawGrid();
         uni.tick();
     }
     animId = requestAnimationFrame(renderLoop);
@@ -131,30 +134,30 @@ const pause = () => {
 
 const step = () => {
     uni.tick();
-    drawGrid();
     drawCells();
+    drawGrid();
 }
 
 const cleargol = () => {
     initUni(Universe.new(64, 64));
-    drawGrid();
     drawCells();
+    drawGrid();
 }
 
 const randomgol = () => {
-    initUni(Universe.new(64, 64));
+    initUni(Universe.new(200, 200));
     for (var x = 0; x < width; x++)
         for (var y = 0; y < width; y++)
             if (Math.random() < 0.5)
                 uni.toggle(x, y);
-    drawGrid();
     drawCells();
+    drawGrid();
 }
 
 const defaultgol = () => {
     initUni(Universe.default());
-    drawGrid();
     drawCells();
+    drawGrid();
 }
 
 document.getElementById('pause').onclick = pause;
@@ -167,7 +170,7 @@ document.getElementById('range').onchange = (e) => {
     targFps = e.target.value;
 }
 
-drawGrid();
 drawCells();
+drawGrid();
 
 // requestAnimationFrame(renderLoop);

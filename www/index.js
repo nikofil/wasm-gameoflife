@@ -114,7 +114,7 @@ const renderLoop = (ts) => {
         const perf = performance.now();
         const fps = 1000 / (perf - perfPrev);
         perfPrev = perf;
-        document.getElementById('fps').innerText = fps.toString().slice(0, 4);
+        document.getElementById('fps').innerText = Math.floor(fps).toString().padStart(2, '0');
         prev = ts;
         drawCells();
         drawGrid();
@@ -145,7 +145,7 @@ const cleargol = () => {
 }
 
 const randomgol = () => {
-    initUni(Universe.new(200, 200));
+    initUni(Universe.new(64, 64));
     for (var x = 0; x < width; x++)
         for (var y = 0; y < width; y++)
             if (Math.random() < 0.5)

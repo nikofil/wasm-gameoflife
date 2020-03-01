@@ -1,10 +1,15 @@
-extern crate wasm_bindgen;
+#![feature(test)]
 
-use std::cmp::max;
+#[cfg(not(target_os="wasi"))]
+extern crate wasm_bindgen;
+extern crate test;
+
+#[cfg(not(target_os="wasi"))]
 use wasm_bindgen::prelude::*;
+use std::cmp::max;
 use std::fmt::Display;
 
-#[wasm_bindgen]
+#[cfg_attr(not(target_os="wasi"), wasm_bindgen)]
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Cell {
@@ -12,14 +17,14 @@ pub enum Cell {
     Alive = 1,
 }
 
-#[wasm_bindgen]
+#[cfg_attr(not(target_os="wasi"), wasm_bindgen)]
 pub struct Universe {
     width: u32,
     height: u32,
     cells: Vec<u8>,
 }
 
-#[wasm_bindgen]
+#[cfg_attr(not(target_os="wasi"), wasm_bindgen)]
 impl Universe {
     pub fn new(width: u32, height: u32) -> Universe {
         Universe {
@@ -30,8 +35,12 @@ impl Universe {
     }
 
     pub fn default() -> Universe {
-        let wd = 64;
-        let ht = 64;
+        Universe::default_with_size(64)
+    }
+
+    pub fn default_with_size(size: u32) -> Universe {
+        let wd = size;
+        let ht = size;
         let mut uni = Universe::new(wd, ht);
         for idx in 0..(wd*ht) {
             if idx % 2 == 0 || idx % 7 == 0 {
@@ -123,6 +132,7 @@ impl Display for Universe {
 mod tests {
     use crate::Cell;
     use crate::Universe;
+    use test::Bencher;
 
     #[test]
     fn test_basics() {
@@ -166,5 +176,13 @@ mod tests {
         assert_eq!(uni.to_string(), "...\nxxx\n...\n");
         uni.tick();
         assert_eq!(uni.to_string(), ".x.\n.x.\n.x.\n");
+    }
+
+    #[bench]
+    fn bench_universe_step(b: &mut Bencher) {
+        let mut uni = Universe::default();
+        b.iter(|| {
+            uni.tick();
+        });
     }
 }

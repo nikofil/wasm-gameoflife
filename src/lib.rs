@@ -1,4 +1,6 @@
 #![feature(test)]
+#![feature(stdsimd)]
+extern crate core_arch;
 
 #[cfg(not(target_os="wasi"))]
 extern crate wasm_bindgen;

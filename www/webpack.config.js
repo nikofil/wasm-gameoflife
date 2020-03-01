@@ -5,8 +5,7 @@ module.exports = {
   entry: "./bootstrap.js",
   output: {
     path: path.resolve(__dirname, "dist"),
-    publicPath: '/assets/js/',
-    filename: "gameoflife.js",
+    filename: "bootstrap.js",
   },
   mode: "development",
   plugins: [
